@@ -1,0 +1,11 @@
+# 编译 / 打包产物
+obj/
+bin/
+output/
+dist/
+*.zip
+
+# IDE / 本机杂项
+.vs/
+*.user
+*.suo

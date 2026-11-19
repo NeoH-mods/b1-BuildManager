@@ -1,0 +1,156 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>BuildManager</AssemblyName>
+    <RootNamespace>BuildManager</RootNamespace>
+    <Version>0.12.31</Version>
+    <DebugType>none</DebugType>
+    <Deterministic>true</Deterministic>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS0649;CS0169;CS8632</NoWarn>
+
+    <!-- 开发构建输出到 output\（与打包目录同一处，整体不入库），不直接写游戏目录；用 deploy.ps1 复制到加载器。 -->
+    <OutputPath>$(MSBuildThisFileDirectory)output\</OutputPath>
+
+    <!-- 游戏根目录只从环境变量读取，不写死本机路径。
+         普通编译不需要它；只有 -p:Deploy=true 时才要求设置 BMW_GAME_ROOT。 -->
+    <GameRoot Condition="'$(BMW_GAME_ROOT)' != ''">$(BMW_GAME_ROOT)</GameRoot>
+    <GameBin Condition="'$(GameRoot)' != ''">$(GameRoot)\b1\Binaries\Win64</GameBin>
+    <!-- 编译/部署依赖拆成两处：
+         local\  纯本地（游戏程序集、加载器、导出的静态表），不入库；
+         assets\ 需要随 git 走的发布资源（分语言快照）。 -->
+    <LocalDir>$(MSBuildThisFileDirectory)local</LocalDir>
+    <AssetsDir>$(MSBuildThisFileDirectory)assets</AssetsDir>
+    <LoaderDir>$(LocalDir)\loader</LoaderDir>
+    <RefsDir>$(LocalDir)\refs</RefsDir>
+    <DataDir>$(LocalDir)\game-data</DataDir>
+    <DeployDir>$(GameBin)\CSharpLoader\Mods\BuildManager</DeployDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- 语言表同时内嵌进 DLL（保证只拷 DLL 也能用），外部 lang\*.json 可覆盖。 -->
+  <ItemGroup>
+    <EmbeddedResource Include="lang\*.json" />
+  </ItemGroup>
+
+  <!-- 加载器基础库（游戏同域，Private=false 不复制） -->
+  <ItemGroup>
+    <Reference Include="CSharpModBase">
+      <HintPath>$(LoaderDir)\CSharpModBase.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(LoaderDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- 从当前游戏 exe 提取的引用闭包（local\refs，原 ue4ss\tools\extracted\refs） -->
+  <ItemGroup>
+    <Reference Include="B1UI_GSE.Script">
+      <HintPath>$(RefsDir)\B1UI_GSE.Script.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BtlSvr.Main">
+      <HintPath>$(RefsDir)\BtlSvr.Main.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="b1.Managed">
+      <HintPath>$(RefsDir)\b1.Managed.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="b1.Native">
+      <HintPath>$(RefsDir)\b1.Native.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="b1.NativePlugins">
+      <HintPath>$(RefsDir)\b1.NativePlugins.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GSE.Core">
+      <HintPath>$(RefsDir)\GSE.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GSE.GSNet">
+      <HintPath>$(RefsDir)\GSE.GSNet.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GSE.GSSdk">
+      <HintPath>$(RefsDir)\GSE.GSSdk.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GSE.OnlineBase">
+      <HintPath>$(RefsDir)\GSE.OnlineBase.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GSE.ProtobufDB">
+      <HintPath>$(RefsDir)\GSE.ProtobufDB.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GUR.Runtime">
+      <HintPath>$(RefsDir)\GUR.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Google.Protobuf">
+      <HintPath>$(RefsDir)\Google.Protobuf.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="LitJSON">
+      <HintPath>$(RefsDir)\LitJSON.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Protobuf.RunTime">
+      <HintPath>$(RefsDir)\Protobuf.RunTime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sentry">
+      <HintPath>$(RefsDir)\Sentry.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnrealEngine.Runtime">
+      <HintPath>$(RefsDir)\UnrealEngine.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnrealEngine">
+      <HintPath>$(RefsDir)\UnrealEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Diana.Common">
+      <HintPath>$(RefsDir)\Diana.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Diana.Client.Common">
+      <HintPath>$(RefsDir)\Diana.Client.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Diana.Server.Common">
+      <HintPath>$(RefsDir)\Diana.Server.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- 可选：dotnet build -p:Deploy=true 时顺手复制到加载器（DLL + 同目录 data + lang）。 -->
+  <Target Name="DeployToGame" AfterTargets="Build" Condition="'$(Deploy)' == 'true'">
+    <ItemGroup>
+      <BuildManagerData Include="$(DataDir)\*.json" />
+      <BuildManagerLang Include="$(MSBuildThisFileDirectory)lang\*.json" />
+      <BuildManagerLocale Include="$(AssetsDir)\locale\*.json" />
+    </ItemGroup>
+    <Error Condition="'$(GameRoot)' == ''" Text="Deploy requires BMW_GAME_ROOT (or -p:GameRoot=...)." />
+    <MakeDir Directories="$(DeployDir);$(DeployDir)\data;$(DeployDir)\data\locale;$(DeployDir)\lang" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DeployDir)" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="@(BuildManagerData)" DestinationFolder="$(DeployDir)\data" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="@(BuildManagerLocale)" DestinationFolder="$(DeployDir)\data\locale" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="@(BuildManagerLang)" DestinationFolder="$(DeployDir)\lang" OverwriteReadOnlyFiles="true" />
+    <Message Importance="high" Text="Deployed $(TargetFileName) + @(BuildManagerData->Count()) data + @(BuildManagerLocale->Count()) locale + @(BuildManagerLang->Count()) lang -> $(DeployDir)" />
+  </Target>
+
+</Project>
